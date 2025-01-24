@@ -27,7 +27,7 @@ jobs:
 
       - name: List all branches
         run: |
-          # List all branches (remote and local)
+          # List both remote and local branches
           echo "Listing all branches..."
           git branch -r
           git branch
@@ -41,7 +41,9 @@ jobs:
 
           # Set the threshold for "stale" branches (5 minutes ago)
           stale_threshold=$(date -d "5 minutes ago" +%s)
+          echo "Stale threshold: $stale_threshold (5 minutes ago)"
 
+          # Process each branch
           for branch in $branches; do
             # Trim the 'origin/' prefix for remote branches (if applicable)
             branch_name=$(echo "$branch" | sed 's/^origin\///')
@@ -54,6 +56,7 @@ jobs:
               # Local branch
               last_commit_date=$(git log -1 --format=%ct "$branch_name")
             fi
+
             echo "Branch: $branch, Last commit date: $last_commit_date"
 
             # Compare the commit date to the threshold
