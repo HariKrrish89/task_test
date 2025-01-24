@@ -24,6 +24,13 @@ jobs:
       - name: Authenticate with GitHub CLI
         run: gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
 
+      - name: List all branches
+        run: |
+          # List all branches (remote and local)
+          echo "Listing all branches..."
+          git branch -r
+        shell: bash
+
       - name: Get all branches and check for stale ones
         run: |
           # List all branches (remote and local)
