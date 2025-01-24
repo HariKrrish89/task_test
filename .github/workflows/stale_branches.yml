@@ -22,7 +22,8 @@ jobs:
           sudo apt-get install gh
 
       - name: Authenticate with GitHub CLI
-        run: gh auth login --with-token ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
 
       - name: List all branches
         run: |
