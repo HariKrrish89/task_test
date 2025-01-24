@@ -1,0 +1,48 @@
+name: Delete Stale Branches
+
+on:
+  schedule:
+    # This will run every day at midnight (UTC)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allows manual trigger of the workflow
+    # This can be run manually from the GitHub Actions tab if needed
+
+jobs:
+  delete-stale-branches:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up GitHub CLI
+        uses: cli/cli-action@v1
+
+      - name: Authenticate with GitHub CLI
+        run: gh auth login --with-token < ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get all branches and check for stale ones
+        run: |
+          # List all branches (remote and local)
+          branches=$(git branch -r | grep -v '\->')
+          echo "Branches found: $branches"
+
+          # Set the threshold for "stale" branches (e.g., 30 days)
+          stale_threshold=$(date -d "30 days ago" +%s)
+
+          for branch in $branches; do
+            # Get the last commit date of each branch
+            last_commit_date=$(git log -1 --format=%ct "$branch")
+            echo "Branch: $branch, Last commit date: $last_commit_date"
+
+            # Compare the commit date to the threshold
+            if [[ $last_commit_date -lt $stale_threshold ]]; then
+              echo "Deleting stale branch: $branch"
+              # Delete the branch if it is stale (delete from remote)
+              git push origin --delete "${branch#origin/}"
+            else
+              echo "Branch is still active: $branch"
+            fi
+          done
+        shell: bash
