@@ -15,6 +15,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2  # Check out the code in the repository
 
+    - name: Fetch all branches from the remote
+      run: |
+        # Fetch all branches from the remote repository
+        git fetch --all
+
     - name: List local branches
       run: |
         echo "Listing local branches:"
