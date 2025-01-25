@@ -1,63 +1,26 @@
-name: Delete Stale Remote Branches
+name: List Branches in Repo
 
+# Trigger the workflow manually or on push to the main branch (or any other branch you prefer)
 on:
   push:
     branches:
-      - '**'  # Triggers the workflow on any commit to any branch
+      - main
+  workflow_dispatch:  # Allows manual triggering from the GitHub Actions UI
 
 jobs:
-  delete-stale-branches:
-    runs-on: ubuntu-latest
+  list_branches:
+    runs-on: ubuntu-latest  # Use an Ubuntu runner for this workflow
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v2  # Check out the code in the repository
 
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install gh
+    - name: List local branches
+      run: |
+        echo "Listing local branches:"
+        git branch
 
-      - name: Authenticate with GitHub CLI
-        run: |
-          echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
-
-      - name: List all remote branches
-        run: |
-          # List all remote branches excluding the "HEAD" reference
-          echo "Listing remote branches..."
-          git branch -r | grep -v '\->'
-        shell: bash
-
-      - name: Get all remote branches and check for stale ones
-        run: |
-          set -x  # Enable debugging to trace errors
-          
-          # Get all remote branches, excluding "origin/main" and "origin/master"
-          branches=$(git branch -r | grep -v '\->' | grep -v 'origin/main' | grep -v 'origin/master')
-          echo "Branches found: $branches"
-
-          # Set the threshold for "stale" branches (5 minutes ago)
-          stale_threshold=$(date -d "5 minutes ago" +%s)
-          echo "Stale threshold: $stale_threshold (5 minutes ago)"
-
-          # Loop through each branch to check if it's stale
-          for branch in $branches; do
-            # Trim the 'origin/' prefix for remote branches
-            branch_name=$(echo "$branch" | sed 's/^origin\///')
-
-            # Get the last commit date of each remote branch
-            last_commit_date=$(git log -1 --format=%ct "$branch" || echo "Error: Branch not found")
-
-            echo "Branch: $branch, Last commit date: $last_commit_date"
-
-            # Compare the last commit date to the threshold
-            if [[ $last_commit_date -lt $stale_threshold ]]; then
-              echo "Deleting stale remote branch: $branch"
-              # Delete the remote branch (gracefully handling errors)
-              git push origin --delete "$branch_name" || echo "Failed to delete branch $branch_name"
-            else
-              echo "Branch is still active: $branch"
-            fi
-          done
-        shell: bash
+    - name: List remote branches
+      run: |
+        echo "Listing remote branches:"
+        git branch -r
