@@ -1,31 +1,40 @@
-name: List Branches in Repo
+name: Clean Up Stale Branches
 
-# Trigger the workflow manually or on push to the main branch (or any other branch you prefer)
 on:
   push:
     branches:
-      - main
+      - main  # Trigger on push to the 'main' branch
   workflow_dispatch:  # Allows manual triggering from the GitHub Actions UI
 
 jobs:
-  list_branches:
+  delete_stale_branches:
     runs-on: ubuntu-latest  # Use an Ubuntu runner for this workflow
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2  # Check out the code in the repository
+      - name: Checkout code
+        uses: actions/checkout@v2  # Check out the code in the repository
 
-    - name: Fetch all branches from the remote
-      run: |
-        # Fetch all branches from the remote repository
-        git fetch --all
+      - name: Fetch all branches from the remote
+        run: |
+          git fetch --all  # Ensure all branches are fetched from the remote
 
-    - name: List local branches
-      run: |
-        echo "Listing local branches:"
-        git branch
-
-    - name: List remote branches
-      run: |
-        echo "Listing remote branches:"
-        git branch -r
+      - name: List all branches with their last commit date and delete stale ones
+        run: |
+          echo "Listing all branches with their last commit date:"
+          # Loop through each remote branch
+          for branch in $(git branch -r | grep -v '\->'); do
+            # Get the last commit date for each branch
+            last_commit_date=$(git log -1 --format=%ct origin/${branch#origin/})
+            # Get the current time
+            current_time=$(date +%s)
+            # Calculate the time difference in seconds
+            time_diff=$((current_time - last_commit_date))
+            # If the branch hasn't been used in the last 5 minutes (300 seconds), delete it
+            if [ $time_diff -gt 300 ]; then
+              echo "Deleting stale branch: $branch"
+              # Delete the stale branch from the remote repository
+              git push origin --delete ${branch#origin/}
+            else
+              echo "Branch $branch is not stale (used within the last 5 minutes)."
+            fi
+          done
