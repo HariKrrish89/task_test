@@ -14,6 +14,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2  # Check out the code in the repository
 
+      - name: Set up Git for Authentication
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Set up authentication using the secret token
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git
+
       - name: Fetch all branches from the remote
         run: |
           git fetch --all  # Ensure all branches are fetched from the remote
