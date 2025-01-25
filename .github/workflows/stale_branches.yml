@@ -3,8 +3,8 @@ name: Delete Stale Branches
 on:
   push:
     branches:
-      - main  # You can set this to any branch you want the action to run on
-  workflow_dispatch:  # Allows manual triggering of the workflow from GitHub UI
+      - main  # Trigger on push to the main branch, adjust if necessary
+  workflow_dispatch:  # Allows manual triggering from GitHub UI
 
 jobs:
   delete_stale_branches:
@@ -16,17 +16,25 @@ jobs:
 
     - name: Set up Git credentials with the PAT
       run: |
+        # Use the Personal Access Token (PAT) for authentication
         git remote set-url origin https://x-access-token:${{ secrets.STALE_BRANCHES_TOKEN }}@github.com/${{ github.repository }}.git
 
     - name: Fetch all branches from the remote
       run: |
-        git fetch --all  # Fetch all branches from the remote repository
+        # Fetch all branches from the remote repository
+        git fetch --all
 
     - name: List all branches with their last commit date
       run: |
         echo "Listing all branches with their last commit date:"
         # Loop through each remote branch
         for branch in $(git branch -r | grep -v '\->'); do
+          # Skip the 'main' branch to prevent deletion of the active branch
+          if [[ "$branch" == "origin/main" ]]; then
+            echo "Skipping deletion of the main branch: $branch"
+            continue
+          fi
+
           # Get the last commit date for each branch
           last_commit_date=$(git log -1 --format=%ct origin/${branch#origin/})
           # Get the current time
